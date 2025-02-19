@@ -239,6 +239,7 @@ void read_Laser_pump(vector<string> & str, ifstream& fp_input, Laser& pulse,
   bool pseudoPW = false;
   bool sin2 = false;
   double t0 = 0;
+  bool monochromatic = false;
 
   gaussian = false;
   if(str.size() < 2){
@@ -249,8 +250,9 @@ void read_Laser_pump(vector<string> & str, ifstream& fp_input, Laser& pulse,
   if( 0 == strcasecmp(str[1].c_str(), "gaussian") )  gaussian = true;
   else if(str[1] == "sin2")  sin2 = true;
   else if(str[1] == "pw")  pseudoPW = true;
+  else if(str[1] == "monochromatic") monochromatic = true; // CHANGE SO THIS MEANS SOMETHING TO THE LASER
   else  {
-    printf("Allowed types for laserpump: gaussian, sin2. Your type \" %s \" is not available.\n", str[1].c_str());
+    printf("Allowed types for laserpump: gaussian, sin2, pw and monochromatic. Your type \" %s \" is not available.\n", str[1].c_str());
     exit(1);
   }
 
@@ -337,12 +339,13 @@ void Read_Input
    vector<Laser> & Laser_pumps, Laser& pulse2, double& DELAY,//Coord_B& u1, Coord_B& u2, bool& gaussian1, bool& gaussian2, double& sigma1, double& sigma2, double& DELAY,//lasers
    string& iMode, string& TBtype, double& dt, double& t_fin, //tdse options
    bool& iWFDs, int& wfd_resolution, Coulomb_parameters& Coulomb_set, bool& iCurrent, bool& iTAbs, bool& iTAbsK,    //observables
-   double& T1, double& T2, double& Tch,
+   double& T1, double& T2, double& Tch, std::string& decoherence_type,
    int& nTAk, vec2d& TAkpt, vec1i& tagTAk,
     vec1d& hopping,
     double& FermiEnergy,
     methods_Diff_Eq &   Diff_Eq, int & it_resolution,   //decoherences
-    double& change_gap_constant, bool & Vectorization)
+    double& change_gap_constant, bool & Vectorization,
+    bool& print_kpts, bool& print_kresolved_hamiltonian, bool& print_kresolved_population, bool& print_kresolved_population_eigenbasis)
 {
   Coord_B u1; 
   Coord_B u2; 
@@ -1030,6 +1033,10 @@ void Read_Input
                     else if ( 0 ==strcasecmp(str[0].c_str(), "Coulomb_band_reconstruction") )   Coulomb_set.Coulomb_calc = true;
                     else if ( 0 ==strcasecmp(str[0].c_str(), "TransientAbsorption") || 0 ==strcasecmp(str[0].c_str(), "TAbs") ) iTAbs = true;
                     else if ( 0 ==strcasecmp(str[0].c_str(), "kresolvedTAbs") || 0 ==strcasecmp(str[0].c_str(), "kTAbs") || 0 ==strcasecmp(str[0].c_str(), "kTransientAbsorption") ) iTAbsK = true;
+                    else if ( 0 ==strcasecmp(str[0].c_str(), "print_kpts")) print_kpts = true;
+                    else if ( 0 ==strcasecmp(str[0].c_str(), "print_kresolved_hamiltonian")) print_kresolved_hamiltonian = true;
+                    else if ( 0 ==strcasecmp(str[0].c_str(), "print_kresolved_population")) print_kresolved_population = true;
+                    else if ( 0 ==strcasecmp(str[0].c_str(), "print_kresolved_population_eigenbasis")) print_kresolved_population_eigenbasis = true;
                     else
                     {
                         printf("option %s not available in the observables.\n", str[0].c_str());
@@ -1158,8 +1165,8 @@ void Read_Input
                           printf("You have to specify a number for the decoherence term.");
                           exit(1);
                       }
-                      if      ( 0 ==strcasecmp(str[0].c_str(), "diagonal") )
-                      {
+                      decoherence_type = str[0];
+                      if      ( 0 ==strcasecmp(decoherence_type.c_str(), "diagonal") ){
                          T1 = atof(str[1].c_str());
                          if(str.size() == 3)
                          {
@@ -1174,10 +1181,9 @@ void Read_Input
                                 printf("Can't understand units %s in decoherence.\n", str[2].c_str());
                                 exit(1);
                             } 
-                          }
-                        }
-                        else if ( 0 ==strcasecmp(str[0].c_str(), "offdiagonal") )
-                        {
+                         }
+                       }
+                       else if ( 0 ==strcasecmp(decoherence_type.c_str(), "offdiagonal") ){
                             T2 = atof(str[1].c_str());
                             if(str.size() == 3)
                             {
@@ -1194,8 +1200,8 @@ void Read_Input
                                   } 
                             }
                         }
-                        else if ( 0 ==strcasecmp(str[0].c_str(), "corehole") )    
-                        {
+                        else if ( 0 ==strcasecmp(decoherence_type.c_str(), "corehole") )
+                        {   
                             Tch= atof(str[1].c_str());
 
                             if(str.size() == 3)
@@ -1213,6 +1219,26 @@ void Read_Input
                               }
                             } 
                         }
+                        else if ( 0 ==strcasecmp(decoherence_type.c_str(), "trivial") )
+                        {
+                          T1 = atof(str[1].c_str());
+                          T2 = T1;
+                          if(str.size() == 3)
+                            {
+                                  if( 0 == strcasecmp(str[2].c_str(), "meV"))
+                                  {
+                                      T1 *= energy_eV_au/1000.;
+                                      T2 *= energy_eV_au/1000.;
+                                  }
+                                  else if(0 == strcasecmp(str[2].c_str(), "au") || 0 == strcasecmp(str[2].c_str(), "atomicunit"))
+                                  {}
+                                  else
+                                  {
+                                    printf("Can't understand units %s in decoherence.\n", str[2].c_str());
+                                    exit(1);
+                                  } 
+                            }
+                        }
                         else
                         {
                           printf("Unknow key %s in decoherence.", str[0].c_str()); 
@@ -1224,8 +1250,11 @@ void Read_Input
                            printf("Can't find the end of tdse section.\n"); 
                            exit(1);
                       } 
-                    } 
+              } 
+
           }//end of decoherence
+
+          else decoherence_type = "no decoherence";
 
 
    }//end of if       

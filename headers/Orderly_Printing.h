@@ -250,94 +250,270 @@ void orderly_printing_energies(std::string file_name, int rank_, int nk, int Ncv
 
 // finally, the population
 
-void orderly_printing_population(std::string file_name, int rank_, int nk, int Ncv, vec3x& population_matrix, vec3x& change_of_basis_matrix){
+//void orderly_printing_population(std::string file_name, int rank_, int nk, int Ncv, vec3x& population_matrix, vec3x& change_of_basis_matrix){
+//
+//	int largest_nk = mpi_largest_nk(nk);
+//	if (!folderExists("Output/population/") && rank_ == 0) system("mkdir Output/population/");
+//
+//	ofstream population("Output/population/" + file_name, ios::app);
+//	for(int ik=0; ik<largest_nk; ik++){
+//
+//		complex<double> population_in_bands[Ncv][Ncv];
+//	    for (int ic = 0; ic < Ncv; ic ++){
+//	    	if (ik < nk){
+//	            for (int jc = 0; jc < Ncv; jc++){
+//	                for (int ii = 0; ii < Ncv; ii++){
+//	                    for (int ij = 0; ij < Ncv; ij++){
+//	                    	// if the indexes look weird, see note in Initial_Population function, in InitialPopulation.h header
+//	                        population_in_bands[ic][jc] += change_of_basis_matrix[ik][ic][ii]*population_matrix[ik][ij][ii]*conj(change_of_basis_matrix[ik][jc][ij]);
+//
+//	                    }
+//	                }
+//	            }
+//	        }
+//
+//	        MPI_Barrier(MPI_COMM_WORLD);
+//
+//	        if (rank_ != 0){
+//
+//	            // number of kpts in this rank
+//	            MPI_Send(&nk, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+//
+//	            if (ik < nk){
+//
+//	                // band number
+//	                MPI_Send(&ic, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
+//
+//	                // population complex<double>
+//	                double sent_population_real = population_in_bands[ic][ic].real();
+//	                double sent_population_imag = population_in_bands[ic][ic].imag();
+//	                MPI_Send(&sent_population_real, 1, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
+//	                MPI_Send(&sent_population_imag, 1, MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
+//
+//	                // kpt index
+//	                MPI_Send(&ik, 1, MPI_INT, 0, 4, MPI_COMM_WORLD);
+//
+//	                // rank_
+//	                MPI_Send(&rank_, 1, MPI_INT, 0, 5, MPI_COMM_WORLD);
+//
+//	            }
+//	        }
+//
+//	        MPI_Barrier(MPI_COMM_WORLD);
+//
+//	        if (rank_ == 0){
+//	            if (population.is_open()){
+//	                if (ik < nk){
+//	                    population << ic << " " << std::setprecision(10) << population_in_bands[ic][ic].real() << " " << population_in_bands[ic][ic].imag() << " " << ik << " " << rank_ << "\n";
+//	                }
+//	                for (int i = 1; i < num_procs; i++){
+//
+//	                    int received_nk;
+//	                    MPI_Recv(&received_nk, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//
+//	                    if (ik < received_nk){
+//
+//	                        int received_ic;
+//	                        MPI_Recv(&received_ic, 1, MPI_INT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//
+//	                        double received_population_real, received_population_imag;
+//	                        MPI_Recv(&received_population_real, 1, MPI_DOUBLE, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//	                        MPI_Recv(&received_population_imag, 1, MPI_DOUBLE, i, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//
+//	                        int received_ik;
+//	                        MPI_Recv(&received_ik, 1, MPI_INT, i, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//
+//	                        int received_rank_;
+//	                        MPI_Recv(&received_rank_, 1, MPI_INT, i, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+//
+//	                        population << received_ic << " " << std::setprecision(10) << received_population_real << " " << received_population_imag << " " << received_ik << " " << received_rank_ << "\n";
+//
+//	                    }
+//	                }
+//	            }
+//	        }
+//	    }
+//
+//	    // i think i dont need this barrier
+//	    MPI_Barrier(MPI_COMM_WORLD);
+//	}
+//
+//	population.close();
+//
+//}
+void orderly_printing_population(std::string file_name, int rank_, int nk, int Ncv, vec3x& population_matrix, vec3x& change_of_basis_matrix, std::string basis){
 
 	int largest_nk = mpi_largest_nk(nk);
 	if (!folderExists("Output/population/") && rank_ == 0) system("mkdir Output/population/");
+	if (basis == "eigenbasis"){
+		ofstream population("Output/population/" + file_name, ios::app);
+		for(int ik=0; ik<largest_nk; ik++){
 
-	ofstream population("Output/population/" + file_name, ios::app);
-	for(int ik=0; ik<largest_nk; ik++){
+			complex<double> population_in_bands[Ncv][Ncv];
+		   for (int ic = 0; ic < Ncv; ic ++){
+		   	for (int jc = 0; jc < Ncv; jc++){
+			   	if (ik < nk){
+			               for (int ii = 0; ii < Ncv; ii++){
+			                   for (int ij = 0; ij < Ncv; ij++){
+			                   	// if the indexes look weird, see note in Initial_Population function, in InitialPopulation.h header
+			                       population_in_bands[ic][jc] += change_of_basis_matrix[ik][ic][ii]*population_matrix[ik][ij][ii]*conj(change_of_basis_matrix[ik][jc][ij]);
 
-		complex<double> population_in_bands[Ncv][Ncv];
-	    for (int ic = 0; ic < Ncv; ic ++){
-	    	if (ik < nk){
-	            for (int jc = 0; jc < Ncv; jc++){
-	                for (int ii = 0; ii < Ncv; ii++){
-	                    for (int ij = 0; ij < Ncv; ij++){
-	                    	// if the indexes look weird, see note in Initial_Population function, in InitialPopulation.h header
-	                        population_in_bands[ic][jc] += change_of_basis_matrix[ik][ic][ii]*population_matrix[ik][ij][ii]*conj(change_of_basis_matrix[ik][jc][ij]);
+			                   }
+			               }
+			           }
 
-	                    }
-	                }
-	            }
-	        }
+			       MPI_Barrier(MPI_COMM_WORLD);
 
-	        MPI_Barrier(MPI_COMM_WORLD);
+			       if (rank_ != 0){
 
-	        if (rank_ != 0){
+			           // number of kpts in this rank
+			           MPI_Send(&nk, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
 
-	            // number of kpts in this rank
-	            MPI_Send(&nk, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+			           if (ik < nk){
 
-	            if (ik < nk){
+			               // band number
+			               MPI_Send(&ic, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
+										 MPI_Send(&jc, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
 
-	                // band number
-	                MPI_Send(&ic, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
+			               // population complex<double>
+			               double sent_population_real = population_in_bands[ic][jc].real();
+			               double sent_population_imag = population_in_bands[ic][jc].imag();
+			               MPI_Send(&sent_population_real, 1, MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
+			               MPI_Send(&sent_population_imag, 1, MPI_DOUBLE, 0, 4, MPI_COMM_WORLD);
 
-	                // population complex<double>
-	                double sent_population_real = population_in_bands[ic][ic].real();
-	                double sent_population_imag = population_in_bands[ic][ic].imag();
-	                MPI_Send(&sent_population_real, 1, MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
-	                MPI_Send(&sent_population_imag, 1, MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
+			               // kpt index
+			               MPI_Send(&ik, 1, MPI_INT, 0, 5, MPI_COMM_WORLD);
 
-	                // kpt index
-	                MPI_Send(&ik, 1, MPI_INT, 0, 4, MPI_COMM_WORLD);
+			               // rank_
+			               MPI_Send(&rank_, 1, MPI_INT, 0, 6, MPI_COMM_WORLD);
 
-	                // rank_
-	                MPI_Send(&rank_, 1, MPI_INT, 0, 5, MPI_COMM_WORLD);
+			           }
+			       }
 
-	            }
-	        }
+			       MPI_Barrier(MPI_COMM_WORLD);
 
-	        MPI_Barrier(MPI_COMM_WORLD);
+			       if (rank_ == 0){
+			           if (population.is_open()){
+			               if (ik < nk){
+			                   population << ic << " " << jc << " " << std::setprecision(10) << population_in_bands[ic][jc].real() << " " << population_in_bands[ic][jc].imag() << " " << ik << " " << rank_ << "\n";
+			               }
+			               for (int i = 1; i < num_procs; i++){
 
-	        if (rank_ == 0){
-	            if (population.is_open()){
-	                if (ik < nk){
-	                    population << ic << " " << population_in_bands[ic][ic].real() << " " << population_in_bands[ic][ic].imag() << " " << ik << " " << rank_ << "\n";
-	                }
-	                for (int i = 1; i < num_procs; i++){
+			                   int received_nk;
+			                   MPI_Recv(&received_nk, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-	                    int received_nk;
-	                    MPI_Recv(&received_nk, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			                   if (ik < received_nk){
 
-	                    if (ik < received_nk){
+			                       int received_ic, received_jc;
+			                       MPI_Recv(&received_ic, 1, MPI_INT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+														 MPI_Recv(&received_jc, 1, MPI_INT, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-	                        int received_ic;
-	                        MPI_Recv(&received_ic, 1, MPI_INT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			                       double received_population_real, received_population_imag;
+			                       MPI_Recv(&received_population_real, 1, MPI_DOUBLE, i, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			                       MPI_Recv(&received_population_imag, 1, MPI_DOUBLE, i, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-	                        double received_population_real, received_population_imag;
-	                        MPI_Recv(&received_population_real, 1, MPI_DOUBLE, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-	                        MPI_Recv(&received_population_imag, 1, MPI_DOUBLE, i, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			                       int received_ik;
+			                       MPI_Recv(&received_ik, 1, MPI_INT, i, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-	                        int received_ik;
-	                        MPI_Recv(&received_ik, 1, MPI_INT, i, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			                       int received_rank_;
+			                       MPI_Recv(&received_rank_, 1, MPI_INT, i, 6, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-	                        int received_rank_;
-	                        MPI_Recv(&received_rank_, 1, MPI_INT, i, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+			                       population << received_ic << " " << received_jc << " " << std::setprecision(10) << received_population_real << " " << received_population_imag << " " << received_ik << " " << received_rank_ << "\n";
 
-	                        population << received_ic << " " << received_population_real << " " << received_population_imag << " " << received_ik << " " << received_rank_ << "\n";
+			                   }
+			               }
+			           }
+			       }
 
-	                    }
-	                }
-	            }
-	        }
-	    }
+				}
+		   }
 
-	    // i think i dont need this barrier
-	    MPI_Barrier(MPI_COMM_WORLD);
+		   // i think i dont need this barrier
+		   MPI_Barrier(MPI_COMM_WORLD);
+		}
+
+		population.close();
 	}
 
-	population.close();
+	else if (basis == "wannier"){
+
+		ofstream population("Output/population/" + file_name, ios::app);
+		for(int ik=0; ik<largest_nk; ik++){
+
+		   for (int ic = 0; ic < Ncv; ic ++){
+
+				for (int jc = 0; jc < Ncv; jc ++){
+
+					MPI_Barrier(MPI_COMM_WORLD);
+
+					if (rank_ != 0){
+
+						// number of kpts in this rank
+						MPI_Send(&nk, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+
+						if (ik < nk){
+
+							// band number
+							MPI_Send(&ic, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
+							MPI_Send(&jc, 1, MPI_INT, 0, 2, MPI_COMM_WORLD);
+
+							// population complex<double>
+							double sent_population_real = population_matrix[ik][ic][jc].real();
+							double sent_population_imag = population_matrix[ik][ic][jc].imag();
+							MPI_Send(&sent_population_real, 1, MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
+							MPI_Send(&sent_population_imag, 1, MPI_DOUBLE, 0, 4, MPI_COMM_WORLD);
+
+							// kpt index
+							MPI_Send(&ik, 1, MPI_INT, 0, 5, MPI_COMM_WORLD);
+
+							// rank_
+							MPI_Send(&rank_, 1, MPI_INT, 0, 6, MPI_COMM_WORLD);
+
+						}
+					}
+
+					MPI_Barrier(MPI_COMM_WORLD);
+
+					if (rank_ == 0){
+						if (population.is_open()){
+							if (ik < nk){
+								population << ic << " " << jc << " " << std::setprecision(10) << population_matrix[ik][ic][jc].real() << " " << population_matrix[ik][ic][jc].imag() << " " << ik << " " << rank_ << "\n";
+							}
+							for (int i = 1; i < num_procs; i++){
+
+								int received_nk;
+								MPI_Recv(&received_nk, 1, MPI_INT, i, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+								if (ik < received_nk){
+
+									int received_ic, received_jc;
+									MPI_Recv(&received_ic, 1, MPI_INT, i, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+									MPI_Recv(&received_jc, 1, MPI_INT, i, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+									double received_population_real, received_population_imag;
+									MPI_Recv(&received_population_real, 1, MPI_DOUBLE, i, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+									MPI_Recv(&received_population_imag, 1, MPI_DOUBLE, i, 4, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+									int received_ik;
+									MPI_Recv(&received_ik, 1, MPI_INT, i, 5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+									int received_rank_;
+									MPI_Recv(&received_rank_, 1, MPI_INT, i, 6, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+									population << received_ic << " " << received_jc << " " << std::setprecision(10) << received_population_real << " " << received_population_imag << " " << received_ik << " " << received_rank_ << "\n";
+
+								}
+							}
+						}
+					}
+		   }
+
+		   // i think i dont need this barrier
+		   MPI_Barrier(MPI_COMM_WORLD);
+			}
+		}
+
+		population.close();
+	}
 
 }

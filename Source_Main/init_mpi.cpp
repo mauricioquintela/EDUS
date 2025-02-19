@@ -3,9 +3,10 @@ MPI_Status status;
 
 //######### Initializing MPI  ###########
 int required = MPI_THREAD_SINGLE;
+// the variable provided is declared without a value. later, when MPI_Init_thread() is ran, it gets assigned the largest degree of threading possible.
 int provided;
 //ierr = MPI_Init ( &argc, &argv );
-ierr = MPI_Init_thread ( &argc, &argv, required, &provided );
+ierr = MPI_Init_thread ( &argc, &argv, required, &provided ); // with required = MPI_THREAD_SINGLE it does the same as MPI_Init(&argc, &argv)
 if ( ierr != 0 )
 {
     cout << "\n";

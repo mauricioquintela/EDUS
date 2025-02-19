@@ -23,7 +23,7 @@ int main (int argc, char* argv[])
 {
     
     #include "Source_Main/init_mpi.cpp"
-       stringstream srank; srank<<rank_;
+       stringstream srank; srank<<rank_; // converts rank_ to string
 
     if(rank_==0)
     {
@@ -105,6 +105,8 @@ MPI_Barrier(MPI_COMM_WORLD);
     // struct with omp parameters which will be 
     //private for each omp thread
     Private_omp_parameters OMP_private;
+
+    OMP_private.decoherence_type = decoherence_type;
 
     OMP_private.thr_id = omp_get_thread_num();
     OMP_private.thr_total = omp_get_num_threads();
@@ -319,22 +321,22 @@ MPI_Barrier(MPI_COMM_WORLD);
             }
             
         }
-
-        int ik; // position in shared variable
-        for (int ik_pr = 0; ik_pr < OMP_private.lenght_k; ik_pr++) // loop over position in private variable
-        {
-            ik = ik_pr + OMP_private.begin_count; // coordinate in global array
-            // store initial populations:
-            for (int ic=0; ic<Ncv; ic++){// summation over bands   // 
-                for (int jc=0; jc<Ncv; jc++){ // summation over bands
-                        OMP_private.P_Wannier_0[ik_pr][ic][jc] = P0[ik][ic][jc];
-                        OMP_private.P_Bloch_0[ik_pr][ic][jc] = OMP_private.P_diag[ik][ic][jc];
-                }
-            }
-        }
         #pragma omp barrier
         
     } // fi Coulomb
+
+    int ik; // position in shared variable
+    for (int ik_pr = 0; ik_pr < OMP_private.lenght_k; ik_pr++) // loop over position in private variable
+    {
+        ik = ik_pr + OMP_private.begin_count; // coordinate in global array
+        // store initial populations:
+        for (int ic=0; ic<Ncv; ic++){// summation over bands   // 
+            for (int jc=0; jc<Ncv; jc++){ // summation over bands
+                    OMP_private.P_Wannier_0[ik_pr][ic][jc] = P0[ik][ic][jc];
+                    OMP_private.P_Bloch_0[ik_pr][ic][jc] = OMP_private.P_diag[ik][ic][jc];
+            }
+        }
+    }
     
     #pragma omp master
     {   

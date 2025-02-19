@@ -139,23 +139,23 @@ while(time_loop < t_fin){
     } //master
     
 
-    // // I WROTE THIS vv //
-    // #pragma omp barrier // sinchronise threads
+    // I WROTE THIS vv //
+    #pragma omp barrier // sinchronise threads
 
-    // // PRINTING POPULATION AT IT = IT_STEP_INT
-    // double it_step = pulse1.Period/(8*dt);
-    // int it_step_int = (int)it_step;
-    // int itf = (pulse1.tf-pulse1.t0)/dt;
-    // if (it%it_step_int == 0 && it <= itf){
-    //     std::string population_file_name = "population_it" + std::to_string(it) + ".txt";
-    //     if (rank_ == 0 && omp_get_thread_num() == 0) cout << "\nPRINTING POPULATION IN ITERATION " << it << "\n\n";
-    //     #pragma omp master
-    //     {
-    //         orderly_printing_population(population_file_name, rank_, nk, Ncv, P0, Unitary);
-    //     }
+    // PRINTING POPULATION AT IT = IT_STEP_INT
+    double it_step = Laser_pumps[0].Period/(8*dt);
+    int it_step_int = (int)it_step;
+    int itf = (Laser_pumps[0].tf-Laser_pumps[0].t0)/dt;
+    if (it%it_step_int == 0 && it <= itf && print_kresolved_population){
+        std::string population_file_name = "population_it" + std::to_string(it) + ".txt";
+        if (rank_ == 0 && omp_get_thread_num() == 0) cout << "\nPRINTING POPULATION IN ITERATION " << it << "\n\n";
+        #pragma omp master
+        {
+            orderly_printing_population(population_file_name, rank_, nk, Ncv, P0, Unitary, "wannier");
+        }
 
-    // }
-    // // I WROTE THIS ^^ //
+    }
+    // I WROTE THIS ^^ //
 
     
     #pragma omp barrier // sinchronise threads

@@ -11,10 +11,13 @@
 #include <armadillo>
 #include <memory>
 #include <sys/stat.h>
+#include <chrono>
+#include <string>
 
 
 using namespace std;
 using namespace arma;
+using propagation_time = std::chrono::high_resolution_clock;
 
 #include "BoostArrays.h"
 #include "Constants.h"

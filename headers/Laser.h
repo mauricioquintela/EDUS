@@ -16,6 +16,7 @@ class Laser//use methods E(t) and A(t) to calculate the pulse at a particular ti
         bool gaussian;      //true = gaussian
         bool PW;            //true = pw, false = sin2
         bool sin2;          //true = sin2
+        bool monochromatic;  //true = monochromatic
         double phase;
         Coord_B pol1, pol2; //vectors spanning the plane of polarization
         double t_track;     // time to integrate the electric field and get the vector potential
@@ -33,7 +34,7 @@ class Laser//use methods E(t) and A(t) to calculate the pulse at a particular ti
         void set_t0 (double& a) {t0=a; if(tf!=0.) tf+=t0; }
         void set_boolean(bool& env, bool& gaus, bool& pw, bool& sin){gaussian = gaus; envelope = env; PW = pw; sin2 = sin;}
         void set_pol(double&,double&,double&,double&,double&,double&);
-        void set_window(double& window1, double& window2){w1=window1; w2=window2;}
+        void set_window(double& window1, double& window2){w1=window1; w2=window2; tf=w1+w2;}
         void set_phase(double& phi){phase=phi;}
         //methods to recap variables
         void print_par(string&);
@@ -42,6 +43,7 @@ class Laser//use methods E(t) and A(t) to calculate the pulse at a particular ti
         double gauss(double&);
         double Sin2(double&);
 		double trapezoid(double& t);
+        double monochromatic_envelope(double& t);
 
         //methods to get electric field and vector potential
         vec1d E(double& t);
@@ -69,10 +71,18 @@ double Laser::Sin2(double& t)
 
 double Laser::trapezoid(double& t)
 {
+    double w3 = w1 + w2;
 	if(t>=t0 && t<w1)return (t-t0)/(w1-t0);
 	if(t>=w1 && t<w2)return 1.;
 	if(t>=w2 && t<=tf)return (t-tf)/(w2-tf);
+    //if(t>=w2 && t<=w3)return (t-w3)/(w2-w3);
 	else return 0.;
+}
+
+double Laser::monochromatic_envelope(double& t)
+{
+    if (t>=t0 && t<=tf) return 1;
+    else return 0;
 }
 
 
@@ -132,6 +142,7 @@ multivec1D<double> Laser::E(double& t)//return electric field in cartesian coord
     if(gaussian)   E_envelope = E0*Laser::gauss(t);
     else if(sin2)  E_envelope = E0*Laser::Sin2(t);
     else if(PW)    E_envelope = E0*Laser::trapezoid(t);
+    else if (monochromatic) E_envelope=E0*Laser::monochromatic_envelope(t);
     else E_envelope = 0.;	
     double plane_1, plane_2;
     //choose varying part
@@ -151,6 +162,7 @@ multivec1D<double> Laser::E_crys(double& t)//return electric field in cartesian 
     if(gaussian)   E_envelope = E0*Laser::gauss(t);
     else if(sin2)  E_envelope = E0*Laser::Sin2(t);
     else if(PW)    E_envelope = E0*Laser::trapezoid(t);
+    else if (monochromatic) E_envelope=E0*Laser::monochromatic_envelope(t);
     else E_envelope = 0.;	
     
     double plane_1, plane_2;

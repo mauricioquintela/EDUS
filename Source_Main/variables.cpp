@@ -60,6 +60,7 @@
     double T1=0.;                                                                      //dissipation term for the diagonal terms of rho
     double T2=0.;                                                                      //dissipation term for the off-diagonal terms of rho
     double Tch=0.;                                                                     //dissipation term for the core states
+    std::string decoherence_type;                                                      // string that saves type of decoherence (trivial, diagonal, offdiagona, corehole)
 
     vector<Laser> Laser_pumps;                                                                  //IR pulse
     vec1d EF1(3),AF1(3); EF1.fill(0.); AF1.fill(0.);                                                              //electric field and potential vector of the IR pulse    
@@ -122,3 +123,7 @@
     vec4x GradientEnergy; //vector used to store gradient of energy in x,y and z
 
     double change_gap_constant = 0;
+    // if we write these in the input their value changes to true in the Read_Input() function in ReadInput.h
+    bool print_kpts = false, print_kresolved_hamiltonian = false, print_kresolved_population = false, print_kresolved_population_eigenbasis = false;
+    //propagation_time::time_point start;
+    //std::chrono::seconds duration;

@@ -93,6 +93,8 @@ struct Private_omp_parameters{
   vec1i T_dissip_index_0, T_dissip_index_1; 
   int n_diss_terms;
   bool Vectorization;
+
+  std::string decoherence_type;
 };
 
 

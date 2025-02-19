@@ -72,19 +72,19 @@ cout << "Start saving HUD" << endl;
 // I WROTE THIS vv //
 MPI_Barrier(MPI_COMM_WORLD);
 
-// if (rank_ == 0) cout << "PRINTING K-POINTS\n";
-// #pragma omp barrier
-// #pragma omp master
-// {
-//     orderly_printing_kpoints("kpts.txt", rank_, nk, kpt);
-// }
+if (rank_ == 0 && print_kpts) cout << "\nPRINTING K-POINTS\n\n";
+#pragma omp barrier
+#pragma omp master
+{
+    if (print_kpts) orderly_printing_kpoints("kpts.txt", rank_, nk, kpt);
+}
 
-// if (rank_ == 0) cout << "PRINTING ENERGIES\n";
-// #pragma omp barrier
-// #pragma omp master
-// {
-//     orderly_printing_energies("energies.txt", rank_, nk, Ncv, Hamiltonian, Unitary);
-// }
+if (rank_ == 0 && print_kresolved_hamiltonian) cout << "\nPRINTING ENERGIES\n\n";
+#pragma omp barrier
+#pragma omp master
+{
+    if (print_kresolved_hamiltonian) orderly_printing_energies("energies.txt", rank_, nk, Ncv, Hamiltonian, Unitary);
+}
 
 // I WROTE THIS ^^ //
 

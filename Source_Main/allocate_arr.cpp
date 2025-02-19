@@ -71,7 +71,6 @@
     printf("                Memory required ~ %4.4f Mb\n", 2*(kpt.n1()+nk)*P0.n2()*P0.n3()*8.*2./(1024.*1024.)  );
 
 
-
     vec2d   T(Ncv, Ncv);           T.fill(0.);       
 
 

@@ -58,7 +58,7 @@ if (Coulomb_set.Coulomb_calc) {
     PrintLossesMPI_exciton(fp_Loss, time_loop,
     Ncv, Nb[0], (Nb[0]+Nb[1]),
     P0, Coulomb_set, OMP_private, trig_k_omp, EF_pr,
-    root_rank, rank_, print_matrices_in_kspace, Vectorization, n_cond, P_cond_max_loc_mpi);
+    root_rank, rank_, print_matrices_in_kspace, Vectorization, n_cond, P_cond_max_loc_mpi); // its the function that prints "Preservation of particle num fail P_trace"
 
     // #pragma omp master
     // {

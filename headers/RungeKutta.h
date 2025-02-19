@@ -216,7 +216,15 @@ void get_derivative_Df(
         ******************       in the Wannier gauge       *************************
         *****************************************************************************
         ****************************************************************************/
-        if (OMP_private.n_diss_terms > 0) { // perform this only if we have non zero dissipation terms
+        if (OMP_private.decoherence_type == "trivial"){
+            for (int ic = Nch; ic < Ncv; ic++){
+                for (int jc = Nch; jc < Ncv; jc++){
+                    Pv[ik_pr][ic][jc] -= T[Nch][Nch]*(P[ik][ic][jc] - OMP_private.P_Wannier_0[ik_pr][ic][jc]);
+                }
+            }
+
+        }
+        else if (OMP_private.n_diss_terms > 0) { // perform this only if we have non zero dissipation terms
             OMP_private.Mk.fill(0.0); // !!!if
             int ii, jj;
             for (int i_0=0; i_0 <OMP_private.n_diss_terms; i_0++){

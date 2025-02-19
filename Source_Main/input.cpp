@@ -27,14 +27,15 @@ Read_Input(fp_input, a, b,
     Laser_pumps,  pulse2, DELAY,// u1,  u2, gaussian1, gaussian2, sigma1, sigma2, DELAY,
     iMode, TBtype, dt,t_fin,
     iWFDs, wfd_resolution, Coulomb_set,  iCurrent, iTAbs, iTAbsK,
-    T1,  T2,  Tch,
+    T1,  T2,  Tch, decoherence_type,
     nTAk, TAkpt, tagTAk,
            hopping, 
            FermiE,
            Diff_Eq,
            it_resolution,
            change_gap_constant,
-           Vectorization
+           Vectorization,
+           print_kpts, print_kresolved_hamiltonian, print_kresolved_population, print_kresolved_population_eigenbasis
     );
 printf("End read input...\n");
 
